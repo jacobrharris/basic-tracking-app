@@ -61,4 +61,15 @@
     NSLog(@"%@", error);
 }
 
+#pragma mark - MKMapViewDelegate
+
+- (void)mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray<MKAnnotationView *> *)views {
+    for (MKAnnotationView *view in views) {
+        CLLocationCoordinate2D coord = view.annotation.coordinate;
+        MKCoordinateSpan span = MKCoordinateSpanMake(0.02, 0.02);
+        MKCoordinateRegion region = MKCoordinateRegionMake(coord, span);
+        [mapView setRegion:region animated:YES];
+    }
+}
+
 @end
