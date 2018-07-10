@@ -7,8 +7,13 @@
 //
 
 #import "ViewController.h"
+#import <CoreLocation/CoreLocation.h>
+#import <MapKit/MapKit.h>
 
-@interface ViewController ()
+@interface ViewController () <CLLocationManagerDelegate, MKMapViewDelegate>
+
+@property (strong, nonatomic) CLLocationManager *locationManager;
+@property (weak, nonatomic) IBOutlet MKMapView *mapView;
 
 @end
 
@@ -16,14 +21,44 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    
+    self.locationManager = [[CLLocationManager alloc] init];
+    self.locationManager.delegate = self;
+    self.locationManager.allowsBackgroundLocationUpdates = YES;
+    self.locationManager.showsBackgroundLocationIndicator = YES;
+
+    self.mapView.showsUserLocation = YES;
+    self.mapView.delegate = self;
 }
 
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (IBAction)didTapLocationButton:(UIButton *)sender {
+    [self.locationManager requestAlwaysAuthorization];
+    [self.locationManager startUpdatingLocation];
 }
 
+#pragma mark - CLLocationManagerDelegate
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
+    NSLog(@"%d", status);
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
+    NSLog(@"%@", locations);
+    for (CLLocation *location in locations) {
+        MKPointAnnotation *point = [[MKPointAnnotation alloc] init];
+        point.coordinate = location.coordinate;
+        
+        CLGeocoder *geocoder = [[CLGeocoder alloc] init];
+        [geocoder reverseGeocodeLocation:location completionHandler:^(NSArray<CLPlacemark *> * _Nullable placemarks, NSError * _Nullable error) {
+            CLPlacemark *placemark = [placemarks firstObject];
+            point.title = placemark.name;
+            [self.mapView addAnnotation:point];
+        }];
+    }
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+    NSLog(@"%@", error);
+}
 
 @end
